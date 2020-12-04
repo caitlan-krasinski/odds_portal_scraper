@@ -7,18 +7,22 @@ from selenium.webdriver.support import expected_conditions as EC
 import csv
 
 #O/U scrape
-data2 = []
+data = []
 count = 0
 driver.get('https://www.oddsportal.com/hockey/usa/nhl/results/#/page/1')
 y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME,'table-main')))
 table = driver.find_element_by_class_name('table-main')
 rows = table.find_elements_by_tag_name('tr')
-for j in range(1, 30):
+
+pages = driver.find_element_by_id('pagination')
+for j in range(len(pages)):
+    
     driver.get('https://www.oddsportal.com/hockey/usa/nhl/results/#/page/'+ str(j))
     y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME,'table-main')))
     table = driver.find_element_by_class_name('table-main')
     rows = table.find_elements_by_tag_name('tr')
     season = '2019/2020'
+    
     for i in range(len(rows)):
             if ('#/page/'+ str(j)) in str(driver.current_url):
                 try:
@@ -29,34 +33,36 @@ for j in range(1, 30):
                     y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME,'table-dummyrow')))
                     rowsx = driver.find_elements_by_tag_name('tr')
                     rows2 = rowsx[i]
+                    #only want rows with links
                     if (rows2.get_attribute('class') == 'odd deactivate') or (rows2.get_attribute('class') == ' deactivate'):
-                        #print('pass')
+                        
                         count = count+1
                         col = rows2.find_elements_by_tag_name('td')[1]
                         y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME,'a')))
-                        #y = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.TAG_NAME,'a')))
+                        #click game link
                         link = col.find_elements_by_tag_name('a')[0].click()
                         if str(driver.current_url) != 'https://www.oddsportal.com/hockey/usa/nhl/results/#/page/'+ str(j) +'/' :
-                            #print('pass1')
+                            
                             y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID,'odds-data-table')))
                             y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME,'tbody')))
                             y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME,'ul-nav')))
                             y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH,'//*[@id="bettype-tabs"]/ul')))
+                            
+                            #click on over/under tab 
                             tab = driver.find_elements_by_xpath('//*[@id="bettype-tabs"]/ul')
                             tab = driver.find_elements_by_class_name('ul-nav')[0]
                             y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH,'//*[@id="bettype-tabs"]/ul/li[5]/a')))
                             y = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="bettype-tabs"]/ul/li[5]/a')))
                             if len(tab.find_elements_by_xpath('//*[@id="bettype-tabs"]/ul/li[5]/a')) > 0:
-                                #print('pass2')
-                                #tot = tab.find_elements_by_xpath('//*[@id="bettype-tabs"]/ul/li[5]/a')[0].text[11:15]
                                 tab.find_elements_by_xpath('//*[@id="bettype-tabs"]/ul/li[5]/a')[0].click()
                             if "#over-" in str(driver.current_url):
-                                #print('pass3')
                                 #scrape
+                                
+                                #click on +5.5 row to reveal rows
                                 y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME,'table-container')))
                                 handicap = driver.find_elements_by_class_name('table-container')
                                 handicap_55 = driver.find_element_by_link_text('Over/Under +5.5').click()
-                                #scrape
+
                                 y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME,'table-container')))
                                 bookmakers = driver.find_elements_by_tag_name('tr')
                                 date = driver.find_elements_by_tag_name('p')[1].text
@@ -65,6 +71,8 @@ for j in range(1, 30):
                                 team2 = game[1]
                                 bet_type = driver.find_elements_by_class_name('active')[2].text
                                 print(j, count, date, team1, team2, bet_type)
+                                
+                                #get data for each bookmaker
                                 for x in bookmakers:
                                     y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME,'table-container')))
                                     y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME,'name')))
@@ -95,7 +103,6 @@ for j in range(1, 30):
 
                                             hov = ActionChains(driver).move_to_element(one[2])
                                             hov.perform()
-                                            #y = driver.implicitly_wait(1)
                                             y = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH,"//*[@id='tooltiptext']/strong")))
                                             if len(x.find_elements_by_xpath("//*[@id='tooltiptext']/strong")) == 2:
                                                 driver.implicitly_wait(1)
@@ -109,7 +116,6 @@ for j in range(1, 30):
 
                                             r = [j, season, date, bet_type, team1, team2, bookmaker, '+5.5',open_odd1, close_odd1,  open_odd2, close_odd2, payout] 
                                             data.append(r)
-                                            #print(r)
 
 
                     driver.get('https://www.oddsportal.com/hockey/usa/nhl/results/#/page/'+ str(j))
